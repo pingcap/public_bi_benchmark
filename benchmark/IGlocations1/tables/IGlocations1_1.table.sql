@@ -15,6 +15,6 @@ CREATE TABLE "IGlocations1_1"(
   "POPESTIMATE2014" integer NOT NULL,
   "PRIMGEO_FLAG" smallint NOT NULL,
   "SUMLEV" smallint NOT NULL,
-  "Statecode" smallint NOT NULL,
+  "State code" smallint NOT NULL,
   "State" varchar(20) NOT NULL
 );

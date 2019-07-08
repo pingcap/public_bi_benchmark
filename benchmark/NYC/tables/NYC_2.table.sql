@@ -51,6 +51,6 @@ CREATE TABLE "NYC_2"(
   "Taxi Pick Up Location" varchar(27),
   "Unique Key" integer NOT NULL,
   "Vehicle Type" varchar(23),
-  "X Coordinate (StatePlane)" integer,
-  "Y Coordinate (StatePlane)" integer
+  "X Coordinate (State Plane)" integer,
+  "Y Coordinate (State Plane)" integer
 );

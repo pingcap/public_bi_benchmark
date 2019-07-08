@@ -11,7 +11,7 @@ CREATE TABLE "IGlocations2_1"(
   "longitude" decimal(11, 8) NOT NULL,
   "media_type" varchar(5) NOT NULL,
   "media_url" varchar(153) NOT NULL,
-  "State(copy)" varchar(16) NOT NULL,
+  "State (copy)" varchar(16) NOT NULL,
   "state" varchar(16) NOT NULL,
   "username" varchar(30) NOT NULL,
   "Calculation_1750724145742463" decimal(5, 2) NOT NULL,
