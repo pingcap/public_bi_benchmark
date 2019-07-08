@@ -44,9 +44,8 @@ var (
 	password string
 	database string
 
-	keepCSV   bool
-	newCSV    bool
-	useSample bool
+	useSample    bool
+	ignoreRunErr bool
 
 	cmdLine *flag.FlagSet
 
@@ -68,6 +67,7 @@ func init() {
 	cmdLine.StringVar(&database, "d", "test", "MySQL database")
 
 	cmdLine.BoolVar(&useSample, "sample", false, "Use sample to test")
+	cmdLine.BoolVar(&ignoreRunErr, "ignore-run-error", false, "Ignore errors when run")
 
 	cmdLine.Usage = func() {
 		fmt.Fprintf(cmdLine.Output(), "Usage of %s [prepare|run|cleanup]:\n", os.Args[0])
@@ -304,6 +304,9 @@ func run(name string) error {
 		fmt.Printf("execute %s, takes %s, err %v\n", queryName, time.Now().Sub(start), err)
 
 		if err != nil {
+			if ignoreRunErr {
+				continue
+			}
 			return err
 		}
 		for rows.Next() {
