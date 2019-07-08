@@ -23,7 +23,7 @@ CREATE TABLE "Hatred_1"(
   "Number of Records" smallint NOT NULL,
   "Region" varchar(9) NOT NULL,
   "Self Report Location" varchar(78),
-  "State " varchar(2) NOT NULL,
+  "State" varchar(2) NOT NULL,
   "StatePopName" varchar(2) NOT NULL,
   "StatePopNum" integer NOT NULL,
   "Tweet Text" varchar(141) NOT NULL,
