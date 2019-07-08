@@ -1,15 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"compress/bzip2"
 	"database/sql"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"runtime/debug"
 	"strings"
@@ -68,8 +67,6 @@ func init() {
 	cmdLine.StringVar(&password, "p", "", "MySQL Password")
 	cmdLine.StringVar(&database, "d", "test", "MySQL database")
 
-	cmdLine.BoolVar(&keepCSV, "keep-csv", true, "Keep CVS files when cleanup")
-	cmdLine.BoolVar(&newCSV, "new-csv", false, "Download CVS file forcily when prepare")
 	cmdLine.BoolVar(&useSample, "sample", false, "Use sample to test")
 
 	cmdLine.Usage = func() {
@@ -147,53 +144,50 @@ func fileExists(filepath string) bool {
 	return true
 }
 
-func downloadFile(filePath string, url string) error {
-	resp, err := http.Get(url)
+func decompressCSV(csvPath string, dataPath string) error {
+	csvFile, err := os.Create(csvPath)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer csvFile.Close()
 
-	basePath := path.Dir(filePath)
-	os.MkdirAll(basePath, 0755)
-
-	if fileExists(filePath) && !newCSV {
-		return nil
-	}
-
-	os.Remove(filePath)
-
-	out, err := os.Create(filePath)
+	dataFile, err := os.Open(dataPath)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer dataFile.Close()
 
-	cr := bzip2.NewReader(resp.Body)
-	br := bufio.NewReaderSize(cr, 16*1024)
-	_, err = io.Copy(out, br)
+	cr := bzip2.NewReader(dataFile)
+
+	_, err = io.Copy(csvFile, cr)
 	return err
 }
 
 func download(name string) error {
-	fileName := path.Join(input, name, "data-urls.txt")
-	data, err := ioutil.ReadFile(fileName)
+	dataUrls := path.Join(input, name, "data-urls.txt")
+
+	dataDir := path.Join(output, name, "data")
+	os.MkdirAll(dataDir, 0755)
+
+	cmd := exec.Command("wget", "-c", "-P", dataDir, "-i", dataUrls)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	files, err := ioutil.ReadDir(dataDir)
 	if err != nil {
 		return err
 	}
 
-	urls := strings.Split(strings.TrimSpace(string(data)), "\n")
-	for _, url := range urls {
-		seps := strings.Split(url, "/")
-		baseName := strings.TrimRight(seps[len(seps)-1], ".bz2")
-		fileName = path.Join(output, name, "csv", baseName)
+	csvDir := path.Join(output, name, "csv")
+	os.MkdirAll(csvDir, 0755)
+	for _, f := range files {
+		dataPath := path.Join(dataDir, f.Name())
+		csvPath := path.Join(csvDir, strings.TrimRight(f.Name(), ".bz2"))
 
-		start := time.Now()
-		fmt.Printf("begin to download %s\n", url)
-		if err = downloadFile(fileName, url); err != nil {
-			return err
-		}
-		fmt.Printf("download %s successfully, takes %s\n", url, time.Now().Sub(start))
+		decompressCSV(csvPath, dataPath)
 	}
 
 	return nil
@@ -301,10 +295,14 @@ func run(name string) error {
 			return err
 		}
 
+		queryName := path.Join(name, "queries", f.Name())
+
 		query := string(data)
 		start := time.Now()
-		fmt.Printf("begin to execute %s\n", query)
+		fmt.Printf("begin to execute query %s\n", queryName)
 		rows, err := db.Query(query)
+		fmt.Printf("execute %s, takes %s, err %v\n", queryName, time.Now().Sub(start), err)
+
 		if err != nil {
 			return err
 		}
@@ -315,7 +313,7 @@ func run(name string) error {
 		if err := rows.Err(); err != nil {
 			return err
 		}
-		fmt.Printf("execute %s, takes %s\n", query, time.Now().Sub(start))
+
 	}
 	return nil
 }
@@ -333,8 +331,5 @@ func cleanup(name string) error {
 		}
 	}
 
-	if !keepCSV {
-		os.RemoveAll(path.Join(output, name, "csv"))
-	}
 	return nil
 }
