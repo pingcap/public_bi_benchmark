@@ -219,12 +219,17 @@ func listTables(name string) ([]string, []string, error) {
 	return tables, tableSQLs, nil
 }
 
-func loadCSV(name string) error {
-
-	_, err := db.Exec("set global local_infile = 'ON'")
+func loadCSV(name string) (err error) {
+	_, err = db.Exec("set global local_infile = 'ON'")
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_, err2 := db.Exec("set global local_infile = 'OFF'")
+		if err == nil {
+			err = err2
+		}
+	}()
 
 	root := path.Join(output, name, "csv")
 	if useSample {
