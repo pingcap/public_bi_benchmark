@@ -220,6 +220,12 @@ func listTables(name string) ([]string, []string, error) {
 }
 
 func loadCSV(name string) error {
+
+	_, err := db.Exec("set global local_infile = 'ON'")
+	if err != nil {
+		return err
+	}
+
 	root := path.Join(output, name, "csv")
 	if useSample {
 		root = path.Join(input, name, "samples")
@@ -242,7 +248,8 @@ func loadCSV(name string) error {
 
 		start := time.Now()
 		fmt.Printf("begin to load csv %s into %s\n", filePath, tableName)
-		_, err := db.Exec("LOAD DATA LOCAL INFILE '" + filePath + "' INTO TABLE " + tableName)
+		_, err := db.Exec("LOAD DATA LOCAL INFILE '" + filePath + "' INTO TABLE " + tableName +
+			" FIELDS TERMINATED BY '|' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\\n'")
 		mysql.DeregisterLocalFile(filePath)
 
 		if err != nil {
