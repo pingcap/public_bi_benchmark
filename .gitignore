@@ -9,3 +9,5 @@ benchmark/*/queries-monetdb/*.ret
 benchmark/*/queries-vectorwise/*.out
 benchmark/*/queries-vectorwise/*.err
 benchmark/*/queries-vectorwise/*.ret
+
+/var
