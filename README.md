@@ -1,35 +1,75 @@
-# Public BI benchmark
-
-User generated benchmark derived from the DBTest'18 paper [1] by Tableau. It contains real data and queries from 46 public workbooks in Tableau Public [2].
-
-We downloaded 46 of the biggest workbooks and converted the data to *.csv* files and collected the SQL queries that appear in the Tableau log when the workbooks are visualized. We processed the *.csv* files and queries with the purpose of making them load and run on different database systems.
-
-This repository contains samples and schema of each .csv file, the queries and a set of scripts for working with the benchmark. The full *.csv* files are available in compressed *bzip2* format at: https://www.cwi.nl/~boncz/PublicBIbenchmark/
-
-Each directory is associated with a workbook and contains:
-```
-samples:        a sample of each .csv file (first 20 rows)
-tables:         .sql files containing the schema of each .csv file
-queries:        .sql files containing the queries
-data-urls.txt:  links for downloading the full .csv.bz2 compressed files
-```
+# Public BI benchmark for Tidb
 
 There are 46 workbooks containing 206 tables (.csv files) with the total size of 41 GB compressed and 386 GB uncompressed.
 
-Multiple .csv files may overlap but are not identical. This is because Tableau extracts the same workbook in multiple different ways for different queries.
+## Quick start
+```
+go run main.go prepare -h 127.0.0.1 -P 4000 -u root -d test > log.txt
+go run main.go run -h 127.0.0.1 -P 4000 -u root -d test > log.txt
+```
 
-The benchmark contains 646 queries which have been tested on MonetDB. The same queries with VectorWise specific syntax are available on the `dev/master` branch under `benchmark/<workbook>/queries-vectorwise`.
+# Usage
+```
+go run main.go [prepare|run|cleanup]:
+-P int
+    	MySQL Port (default 3306)
+  -c value
+    	test case you want to benchmark
+  -d string
+    	MySQL database (default "test")
+  -h string
+    	MySQL Host (default "127.0.0.1")
+  -i string
+    	input benchmark resource (default "./benchmark")
+  -ignore-run-error
+    	Ignore errors when run
+  -o string
+    	output directory to save cvs files and logs (default "./var")
+  -p string
+    	MySQL Password
+  -sample
+    	Use sample to test
+  -u string
+    	MySQL User (default "root")
+```
 
-## dev/master branch
+# Now status
+To run Bibenchmark in tidb, I try to delate some test cases that is not support now.
 
-The `dev/master` branch contains:
-- scripts to download and decompress the entire dataset
-- scripts to create tables (and adapt schema syntax), load data and run queries for MonetDB and VectorWise
-- scripts that document the process of cleaning, fixing and adapting the data and queries from the original Tableau specific form
+Maybe the test cases will be added in future.
+## Remove database:
+'Wins' and 'USCensus'
 
-For more info see the README on `dev/master`.
+## Change test cases:
+bigint to signed: Too many files.
 
-## References
+## Remove test cases:
+N*interval:
+```
+benchmark/CommonGovernment/queries/2.sql
+benchmark/CommonGovernment/queries/22.sql
+benchmark/CommonGovernment/queries/23.sql
+```
 
-[1] Vogelsgesang, Adrian, et al. "Get real: How benchmarks fail to represent the real world." Proceedings of the Workshop on Testing Database Systems. ACM, 2018.\
-[2] https://public.tableau.com
+trim,splitpart:
+```
+benchmark/IGlocations1/queries/16.sql
+benchmark/Romance/queries/8.sql (only trim)
+benchmark/Romance/queries/9.sql (only trim)
+```
+
+median:
+```
+benchmark/PanCreactomy1/queries/2.sql
+benchmark/PanCreactomy2/queries/4.sql
+```
+cast as timestamp:
+```
+benchmark/RealEstate2/queries/31.sql
+```
+cast as text:
+```
+benchmark/TrainsUK1/queries/6.sql
+benchmark/TrainsUK1/queries/7.sql
+benchmark/Uberlandia/queries/12.sql
+```
