@@ -188,6 +188,13 @@ func download(name string) error {
 		csvPath := path.Join(csvDir, strings.TrimRight(f.Name(), ".bz2"))
 
 		decompressCSV(csvPath, dataPath)
+
+		cmd = exec.Command("sed", "-i", "" ,"-e", "s/[[:<:]]null[[:>:]]/\\\\N/g", csvPath)
+		cmd.Stdout = os.Stdout
+		cmd.Stdout = os.Stderr
+		if err = cmd.Run(); err != nil {
+			return err
+		}
 	}
 
 	return nil
