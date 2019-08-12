@@ -1,17 +1,13 @@
-# Public BI benchmark for Tidb
+# Public BI benchmark for TiDB
+
+## 数据集大小
 
 There are 46 workbooks containing 206 tables (.csv files) with the total size of 41 GB compressed and 386 GB uncompressed.
 
-## Quick start
+## 使用方法
 ```
-go run main.go prepare -h 127.0.0.1 -P 4000 -u root -d test > log.txt
-go run main.go run -h 127.0.0.1 -P 4000 -u root -d test > log.txt
-```
-
-# Usage
-```
-go run main.go [prepare|run|cleanup]:
--P int
+go run main.go [download|prepare|run|cleanup]: 
+  -P int
     	MySQL Port (default 3306)
   -c value
     	test case you want to benchmark
@@ -32,18 +28,27 @@ go run main.go [prepare|run|cleanup]:
   -u string
     	MySQL User (default "root")
 ```
+Hint：
 
-# Now status
-To run Bibenchmark in tidb, I try to delate some test cases that is not support now.
+1.使用Sample时，直接prepare即可，无需download。
 
-Maybe the test cases will be added in future.
-## Remove database:
-'Wins' and 'USCensus'
+2.使用数据集时，推荐下载好后使用-o来指定路径。（从源网站下载可能过慢，可以科学上网或者从内部服务器下载）
 
-## Change test cases:
-bigint to signed: Too many files.
+## 现在的数据集
 
-## Remove test cases:
+为了可以在TiDB上运行，对数据集和 SQL 查询语句进行了调整。
+
+### 删除的数据集:
+'Wins' and 'USCensus' （列数大于 512，TiDB暂时不支持）
+
+'Wins' 数据集中共13条查询语句
+
+'USCensus' 数据集中共8条查询语句
+
+### 因语法不支持而更改的 SQL 查询语句:
+Change `cast xx as bigint` to `cast xx as signed`
+
+### 因语法不支持而删除的 SQL 查询语句（及文件）:
 N*interval:
 ```
 benchmark/CommonGovernment/queries/2.sql
