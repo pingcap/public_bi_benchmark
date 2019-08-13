@@ -61,7 +61,7 @@ func init() {
 	cmdLine.Var(&cases, "c", "test case you want to benchmark")
 
 	cmdLine.StringVar(&host, "h", "127.0.0.1", "MySQL Host")
-	cmdLine.IntVar(&port, "P", 3306, "MySQL Port")
+	cmdLine.IntVar(&port, "P", 4000, "MySQL Port")
 	cmdLine.StringVar(&user, "u", "root", "MySQL User")
 	cmdLine.StringVar(&password, "p", "", "MySQL Password")
 	cmdLine.StringVar(&database, "d", "test", "MySQL database")

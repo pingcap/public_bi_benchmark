@@ -1,54 +1,56 @@
 # Public BI benchmark for TiDB
 
-## 数据集大小
+## Data Size
 
 There are 46 workbooks containing 206 tables (.csv files) with the total size of 41 GB compressed and 386 GB uncompressed.
 
-## 使用方法
+## Usage
 ```
 go run main.go [download|prepare|run|cleanup]: 
+//options used to connect the database server.
   -P int
-    	MySQL Port (default 3306)
-  -c value
-    	test case you want to benchmark
+    	MySQL Port (default 4000)
   -d string
     	MySQL database (default "test")
   -h string
     	MySQL Host (default "127.0.0.1")
-  -i string
-    	input benchmark resource (default "./benchmark")
-  -ignore-run-error
-    	Ignore errors when run
-  -o string
-    	output directory to save cvs files and logs (default "./var")
-  -p string
-    	MySQL Password
-  -sample
-    	Use sample to test
   -u string
     	MySQL User (default "root")
+  -p string
+    	MySQL Password
+//options used to control the test behavior.
+  -c value
+    	test case you want to benchmark
+  -i string
+    	input benchmark resource (default "./benchmark")
+  -o string
+    	output directory to save cvs files and logs (default "./var")
+  -sample
+    	Use sample to test
+  -ignore-run-error
+    	Ignore errors when running
 ```
 Hint：
 
-1.使用Sample时，直接prepare即可，无需download。
+1. When using sample to test, you can run `prepare` directly without `download` .
 
-2.使用数据集时，推荐下载好后使用-o来指定路径。（从源网站下载可能过慢，可以科学上网或者从内部服务器下载）
+2. When using datasets to test, download datasets in other ways first, use options `-o` to select file directory. (Maybe the download speed is too slow, VPN or downloading from internal server can work well.) 
 
-## 现在的数据集
+## Status
 
-为了可以在TiDB上运行，对数据集和 SQL 查询语句进行了调整。
+For running the benchmark in TiDB,  some datasets and SQL queries are adjusted. The adjustment is as follows.
 
-### 删除的数据集:
-'Wins' and 'USCensus' （列数大于 512，TiDB暂时不支持）
+### Deleted datasets:
+Datasets 'Wins' and 'USCensus' （The number of columns is greater than 512.）are deleted.
 
-'Wins' 数据集中共13条查询语句
+* In workbook 'Wins' , there are 13 queries. 
 
-'USCensus' 数据集中共8条查询语句
+* In workbook 'USCensus' , there are 8 queries.
 
-### 因语法不支持而更改的 SQL 查询语句:
+### Adjusted SQL queries:
 Change `cast xx as bigint` to `cast xx as signed`
 
-### 因语法不支持而删除的 SQL 查询语句（及文件）:
+### Deleted SQL queries:
 N*interval:
 ```
 benchmark/CommonGovernment/queries/2.sql
