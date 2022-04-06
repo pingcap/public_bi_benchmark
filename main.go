@@ -61,7 +61,7 @@ func init() {
 	cmdLine.Var(&cases, "c", "test case you want to benchmark")
 
 	cmdLine.StringVar(&host, "h", "127.0.0.1", "MySQL Host")
-	cmdLine.IntVar(&port, "P", 3306, "MySQL Port")
+	cmdLine.IntVar(&port, "P", 4000, "MySQL Port")
 	cmdLine.StringVar(&user, "u", "root", "MySQL User")
 	cmdLine.StringVar(&password, "p", "", "MySQL Password")
 	cmdLine.StringVar(&database, "d", "test", "MySQL database")
@@ -70,7 +70,7 @@ func init() {
 	cmdLine.BoolVar(&ignoreRunErr, "ignore-run-error", false, "Ignore errors when run")
 
 	cmdLine.Usage = func() {
-		fmt.Fprintf(cmdLine.Output(), "Usage of %s [prepare|run|cleanup]:\n", os.Args[0])
+		fmt.Fprintf(cmdLine.Output(), "Usage of %s [download|prepare|run|cleanup]:\n", os.Args[0])
 		cmdLine.PrintDefaults()
 	}
 }
@@ -88,6 +88,7 @@ func perr(err error) {
 func main() {
 	op := os.Args[1]
 	switch op {
+	case "download":
 	case "prepare":
 	case "run":
 	case "cleanup":
@@ -123,6 +124,8 @@ func main() {
 	// TODO: support parallelism
 	for _, name := range names {
 		switch op {
+		case "download":
+			err = download(name)
 		case "prepare":
 			err = prepare(name)
 		case "run":
@@ -176,20 +179,6 @@ func download(name string) error {
 		return err
 	}
 
-	files, err := ioutil.ReadDir(dataDir)
-	if err != nil {
-		return err
-	}
-
-	csvDir := path.Join(output, name, "csv")
-	os.MkdirAll(csvDir, 0755)
-	for _, f := range files {
-		dataPath := path.Join(dataDir, f.Name())
-		csvPath := path.Join(csvDir, strings.TrimRight(f.Name(), ".bz2"))
-
-		decompressCSV(csvPath, dataPath)
-	}
-
 	return nil
 }
 
@@ -220,6 +209,30 @@ func listTables(name string) ([]string, []string, error) {
 }
 
 func loadCSV(name string) (err error) {
+	if !useSample {
+		dataDir := path.Join(output, name, "data")
+		files, err := ioutil.ReadDir(dataDir)
+		if err != nil {
+			return err
+		}
+
+		csvDir := path.Join(output, name, "csv")
+		os.MkdirAll(csvDir, 0755)
+		for _, f := range files {
+			dataPath := path.Join(dataDir, f.Name())
+			csvPath := path.Join(csvDir, strings.TrimRight(f.Name(), ".bz2"))
+
+			decompressCSV(csvPath, dataPath)
+
+			cmd := exec.Command("sed", "-i", csvPath, "-e", "s/\\<null\\>/\\\\N/g", csvPath)
+			cmd.Stdout = os.Stdout
+			cmd.Stdout = os.Stderr
+			if err = cmd.Run(); err != nil {
+				return err
+			}
+		}
+	}
+
 	_, err = db.Exec("set global local_infile = 'ON'")
 	if err != nil {
 		return err
@@ -268,13 +281,6 @@ func loadCSV(name string) (err error) {
 func prepare(name string) error {
 	// Try cleanup at first
 	cleanup(name)
-
-	// Download csv files
-	if !useSample {
-		if err := download(name); err != nil {
-			return err
-		}
-	}
 
 	tables, tableSQLs, err := listTables(name)
 	if err != nil {
